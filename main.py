@@ -22,12 +22,14 @@ async def port_scan():
         target_ip = f"{ip_range}.{i}"
         uri= f"ws://{target_ip}:1111"
         try:
-            connection = await websockets.connect(uri)
+            connection = await asyncio.wait_for(websockets.connect(uri), timeout = 3)
             await connection.send("hello")
         except ConnectionRefusedError:
             print("Server connection refuse")
             pass
         except ConnectionError:
+            pass
+        except TimeoutError:
             pass
         except:
             traceback.print_exc()
@@ -36,8 +38,10 @@ async def register_client(websocket, _):
     async for message in websocket:
         print(message)
 
+async def main():
+    async with websockets.serve(register_client, 'localhost', 2222):
+        await asyncio.Future()
+
 if __name__ == '__main__':
-    start_server = websockets.serve(register_client, My_IP, 1111)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+    asyncio.run(main())
 
